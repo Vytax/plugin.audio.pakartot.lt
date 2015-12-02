@@ -64,7 +64,7 @@ class Pakartot(object):
     
     data = self.apiRequest({'action': 'login'})
     
-    if 'action' in data and data['action'] == 'login':
+    if 'user_login' in data and data['user_login'] == 1:
       return True
     
     return False
