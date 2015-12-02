@@ -14,11 +14,24 @@ class Pakartot(object):
   def __init__(self):    
     self.api_url = 'https://api.pakartot.lt/'
     self.user_agent = '|User-Agent=stagefright/1.2+(Linux;Android+4.1.2)'
+    
+    self.default_username = 'publicUSR'
+    self.default_password = 'vka3qaGHowofKcRdTeiV'
+    self.username = None
+    self.password = None
+  
+  def setCredentials(self, username, password):
+    self.username = username
+    self.password = password
   
   def apiRequest(self, req):
     data = {}
-    data['username'] = 'publicUSR'
-    data['password'] = 'vka3qaGHowofKcRdTeiV'
+    if self.username and self.password:
+      data['username'] = self.username
+      data['password'] = self.password
+    else:
+      data['username'] = self.default_username
+      data['password'] = self.default_password
     data['platform'] = 'Android'
     data['commercial_user'] = 'true'
     
@@ -46,6 +59,15 @@ class Pakartot(object):
       print fdata
       
     return json_data
+  
+  def isLoggedIn(self):
+    
+    data = self.apiRequest({'action': 'login'})
+    
+    if 'action' in data and data['action'] == 'login':
+      return True
+    
+    return False
 
   def get_albums(self, album_type, page=1, **options):
     
@@ -98,10 +120,12 @@ class Pakartot(object):
     
     return self.apiRequest({'url': 'home_playlists', 'action': 'playlists', 'page': str(page)})
   
+  def get_user_playlists(self, page=1):
+    
+    return self.apiRequest({'url': 'my_playlists', 'action': 'playlists', 'page': str(page)})
+  
   def get_playlist(self, playlist_id):
     
-    print playlist_id
-  
     data = self.apiRequest({'id' : playlist_id, 'url': 'play', 'action': 'playlist'})
     tids = []
     tracks = []

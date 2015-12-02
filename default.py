@@ -51,6 +51,16 @@ def build_main_directory():
   listitem.setProperty('IsPlayable', 'false')
   xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=15', listitem = listitem, isFolder = True, totalItems = 0)
   
+  if isLoggedIn:
+    listitem = xbmcgui.ListItem('Mano grojaraščiai')
+    listitem.setProperty('IsPlayable', 'false')
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=70&page=1', listitem = listitem, isFolder = True, totalItems = 0)
+  
+  else:
+    listitem = xbmcgui.ListItem('Prisijungti')
+    listitem.setProperty('IsPlayable', 'false')
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=69', listitem = listitem, isFolder = True, totalItems = 0)
+  
   xbmcplugin.setContent(int( sys.argv[1] ), 'albums')
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
@@ -178,9 +188,7 @@ def loadStyles():
   xbmc.executebuiltin('Container.SetViewMode(500)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
   
-def loadPublicPlaylists(page):
-  
-  data = pakartot.get_public_playlists(page)
+def loadPlaylists(data, page, mode):
   
   for playlist in data['playlists']:
     
@@ -189,7 +197,10 @@ def loadPublicPlaylists(page):
       listitem.setThumbnailImage(playlist['playlist_frontend_photo_path'])
       
     info = {}
-    info['count'] = int(playlist['tracks_count'])     
+    if 'tracks_count' in playlist:
+      info['count'] = int(playlist['tracks_count']) 
+    elif 'track_count' in playlist:
+      info['count'] = int(playlist['track_count']) 
     listitem.setInfo(type = 'music', infoLabels = info )
     
     u = {}
@@ -198,14 +209,25 @@ def loadPublicPlaylists(page):
     u['id'] = playlist['playlist_id']
     xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = True, totalItems = 0)
     
-  if 'playlists' in data:    
+  if 'playlists' in data and len(data['playlists']) >= 12:    
     listitem = xbmcgui.ListItem("[Daugiau... ] %d" % (page))
     listitem.setProperty('IsPlayable', 'false')
-    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=5&page='+str(page+1), listitem = listitem, isFolder = True, totalItems = 0)  
+    u = {'mode': mode, 'page': page+1}
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?' + urllib.urlencode(u), listitem = listitem, isFolder = True, totalItems = 0)  
   
   xbmcplugin.setContent(int( sys.argv[1] ), 'albums')
   xbmc.executebuiltin('Container.SetViewMode(506)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def loadPublicPlaylists(page):
+  
+  data = pakartot.get_public_playlists(page)  
+  loadPlaylists(data, page, 5)
+
+def loadUserPlaylists(page):
+  
+  data = pakartot.get_user_playlists(page)
+  loadPlaylists(data, page, 70)
 
 def loadPlaylist(mid):
   
@@ -287,9 +309,20 @@ def play_track(mid):
   listitem.setPath(track['filename'])
   xbmcplugin.setResolvedUrl(handle = int(sys.argv[1]), succeeded = True, listitem = listitem)
 
+def login():
+  
+  xbmc.executebuiltin('Addon.OpenSettings(plugin.audio.pakartot.lt)')
+  xbmc.executebuiltin('Container.Refresh')
+
 # **************** main ****************
 
+username = settings.getSetting('username')
+password = settings.getSetting('password')
+
 pakartot = Pakartot()
+pakartot.setCredentials(username, password)
+
+isLoggedIn = pakartot.isLoggedIn()
 
 path = sys.argv[0]
 params = getParameters(sys.argv[2])
@@ -334,6 +367,10 @@ elif mode == 15:
   search(searchKey, page)
 elif mode == 50:
   play_track(mid)
+elif mode == 69:
+  login()
+elif mode == 70:
+  loadUserPlaylists(page)
 elif mode == 100:
   loadTrack(mid)
   
