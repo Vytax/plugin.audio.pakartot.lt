@@ -157,3 +157,15 @@ class Pakartot(object):
     
     return self.apiRequest({'search' : key, 'url': 'search', 'action': 'quick_new', 'page': str(page)})
   
+  def get_favorites_albums(self, page=1):
+    
+    return self.apiRequest({'url': 'love', 'action': 'albums', 'page': str(page)})
+  
+  def get_favorites_tracks(self, page=1):
+    
+    return self.apiRequest({'url': 'love', 'action': 'tracks', 'page': str(page)})
+  
+  def get_favorites_playlists(self, page=1):
+    
+    return self.apiRequest({'url': 'love', 'action': 'playlists', 'page': str(page)})
+  

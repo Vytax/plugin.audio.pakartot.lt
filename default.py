@@ -55,6 +55,10 @@ def build_main_directory():
     listitem = xbmcgui.ListItem('Mano grojaraščiai')
     listitem.setProperty('IsPlayable', 'false')
     xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=70&page=1', listitem = listitem, isFolder = True, totalItems = 0)
+    
+    listitem = xbmcgui.ListItem('Mylimi...')
+    listitem.setProperty('IsPlayable', 'false')
+    xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=80', listitem = listitem, isFolder = True, totalItems = 0)
   
   else:
     listitem = xbmcgui.ListItem('Prisijungti')
@@ -88,6 +92,8 @@ def loadAlbums(mode, page, mid=0):
   elif mode == 20:
     data = pakartot.get_albums(album_type, page*2 + 1, genre = mid)
     data2 = pakartot.get_albums(album_type, page*2 + 2, genre = mid)
+  elif mode == 90:
+    data = pakartot.get_favorites_albums(page + 1)
   
   if 'albums' in data:
     albums = data['albums']
@@ -110,7 +116,7 @@ def loadAlbums(mode, page, mid=0):
       
     xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=10&id='+album['album_id'], listitem = listitem, isFolder = True, totalItems = 0)
     
-  if albums:
+  if len(albums) > 5:
     listitem = xbmcgui.ListItem("[Daugiau... ] %d" % (page+1))
     listitem.setProperty('IsPlayable', 'false')
       
@@ -229,6 +235,11 @@ def loadUserPlaylists(page):
   data = pakartot.get_user_playlists(page)
   loadPlaylists(data, page, 70)
 
+def loadFavoritelaylists(page):
+  
+  data = pakartot.get_favorites_playlists(page)
+  loadPlaylists(data, page, 92)
+
 def loadPlaylist(mid):
   
   data = pakartot.get_playlist(mid)
@@ -254,6 +265,51 @@ def loadPlaylist(mid):
 	
   xbmcplugin.setContent(int( sys.argv[1] ), 'songs')
   xbmc.executebuiltin('Container.SetViewMode(506)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def loadFavoriteTracks(page=1):
+  
+  data = pakartot.get_favorites_tracks(page)
+  
+  if 'tracks' in data:
+    
+    for track in data['tracks']:
+      listitem = xbmcgui.ListItem(track['track_name'])      
+ 
+      info = {}
+      info['title'] = track['track_name']
+      info['artist'] = track['performers']
+      info['duration'] = track['track_length']
+
+      listitem.setInfo(type = 'music', infoLabels = info )
+      listitem.setProperty('IsPlayable', 'true')
+      xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=50&id='+ track['track_id'], listitem = listitem, isFolder = False, totalItems = 0)
+      
+    if len(data['tracks']) >= 20:
+      listitem = xbmcgui.ListItem("[Daugiau... ] %d" % (page))
+      listitem.setProperty('IsPlayable', 'false')
+      xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=91&page=' + str(page + 1), listitem = listitem, isFolder = True, totalItems = 0)
+      	
+  xbmcplugin.setContent(int( sys.argv[1] ), 'songs')
+  xbmc.executebuiltin('Container.SetViewMode(506)')
+  xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def loadFavorites():
+  
+  listitem = xbmcgui.ListItem('Mylimi albumai')
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=90&page=0', listitem = listitem, isFolder = True, totalItems = 0)
+  
+  listitem = xbmcgui.ListItem('Mylimi įrašai')
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=91&page=1', listitem = listitem, isFolder = True, totalItems = 0)
+  
+  listitem = xbmcgui.ListItem('Mylimi grojaraščiai')
+  listitem.setProperty('IsPlayable', 'false')
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=92&page=1', listitem = listitem, isFolder = True, totalItems = 0)
+  
+  xbmcplugin.setContent(int( sys.argv[1] ), 'albums')
+  xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def search(searchKey, page):
@@ -353,7 +409,7 @@ except:
 
 if mode == None:
   build_main_directory()
-elif mode in [1, 2, 3, 20]:
+elif mode in [1, 2, 3, 20, 90]:
   loadAlbums(mode, page, mid)
 elif mode == 4:
   loadStyles()
@@ -371,6 +427,12 @@ elif mode == 69:
   login()
 elif mode == 70:
   loadUserPlaylists(page)
+elif mode == 80:
+  loadFavorites()
+elif mode == 91:
+  loadFavoriteTracks(page)
+elif mode == 92:
+  loadFavoritelaylists(page)
 elif mode == 100:
   loadTrack(mid)
   
