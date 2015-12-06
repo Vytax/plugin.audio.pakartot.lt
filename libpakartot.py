@@ -169,3 +169,15 @@ class Pakartot(object):
     
     return self.apiRequest({'url': 'love', 'action': 'playlists', 'page': str(page)})
   
+  def favorite_album(self, aid):
+    
+    return self.apiRequest({'url': 'love', 'action': 'like', 'id': aid, 'type': 'ALB'})
+  
+  def favorite_track(self, tid):
+    
+    return self.apiRequest({'url': 'love', 'action': 'like', 'id': tid, 'type': 'TRK'})
+  
+  def favorite_playlist(self, pid):
+  
+    return self.apiRequest({'url': 'love', 'action': 'like', 'id': pid, 'type': 'PLS'})
+  

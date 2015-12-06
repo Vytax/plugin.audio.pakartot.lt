@@ -49,14 +49,14 @@ def build_main_directory():
   
   listitem = xbmcgui.ListItem('Paieška')
   listitem.setProperty('IsPlayable', 'false')
-  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=15', listitem = listitem, isFolder = True, totalItems = 0)
+  xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=14', listitem = listitem, isFolder = True, totalItems = 0)
   
   if isLoggedIn:
     listitem = xbmcgui.ListItem('Mano grojaraščiai')
     listitem.setProperty('IsPlayable', 'false')
     xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=70&page=1', listitem = listitem, isFolder = True, totalItems = 0)
     
-    listitem = xbmcgui.ListItem('Mylimi...')
+    listitem = xbmcgui.ListItem('Mano mylimi...')
     listitem.setProperty('IsPlayable', 'false')
     xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=80', listitem = listitem, isFolder = True, totalItems = 0)
   
@@ -106,6 +106,18 @@ def loadAlbums(mode, page, mid=0):
     listitem = xbmcgui.ListItem(album['album_name_generated'])
     listitem.setProperty('IsPlayable', 'false')
     listitem.setThumbnailImage(album['photo_path'].replace('225x225','348x348'))
+    
+    like = False
+    if 'like' in album:
+      like = album['like']['state'] == 'on'
+    
+    if isLoggedIn:
+      commands = []
+      if like:
+	commands.append(( 'Pašalinti iš mylimų albumų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=7&id='+album['album_id']), ))
+      else:
+	commands.append(( 'Pridėti prie mylimų albumų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=7&id='+album['album_id']), ))
+      listitem.addContextMenuItems( commands )
       
     info = {}
     info['artist'] = album['performers']
@@ -163,6 +175,18 @@ def loadAlbum(album_id):
 
       listitem.setInfo(type = 'music', infoLabels = info )
       
+      like = False
+      if 'like_state' in track:
+	like = track['like_state'] == 'on'
+      
+      if isLoggedIn:
+	commands = []
+	if like:
+	  commands.append(( 'Pašalinti iš mylimų įrašų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=8&id='+track['track_id']), ))
+	else:
+	  commands.append(( 'Pridėti prie mylimų įrašų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=8&id='+track['track_id']), ))
+	listitem.addContextMenuItems( commands )
+      
       if 'filename' in track:
 	listitem.setProperty('IsPlayable', 'true')
 	xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = track['filename'], listitem = listitem, isFolder = False, totalItems = 0)
@@ -208,6 +232,18 @@ def loadPlaylists(data, page, mode):
     elif 'track_count' in playlist:
       info['count'] = int(playlist['track_count']) 
     listitem.setInfo(type = 'music', infoLabels = info )
+    
+    like = False
+    if 'like' in playlist:
+      like = playlist['like']['state'] == 'on'
+    
+    if isLoggedIn:
+      commands = []
+      if like:
+	commands.append(( 'Pašalinti iš mylimų grojaraščių', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=9&id='+playlist['playlist_id']), ))
+      else:
+	commands.append(( 'Pridėti prie mylimų grojaraščių', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=9&id='+playlist['playlist_id']), ))
+      listitem.addContextMenuItems( commands )
     
     u = {}
     u['mode'] = 6
@@ -256,6 +292,18 @@ def loadPlaylist(mid):
 
       listitem.setInfo(type = 'music', infoLabels = info )
       
+      like = False
+      if 'like_state' in track:
+	like = track['like_state'] == 'on'
+      
+      if isLoggedIn:
+	commands = []
+	if like:
+	  commands.append(( 'Pašalinti iš mylimų įrašų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=8&id='+track['tid']), ))
+	else:
+	  commands.append(( 'Pridėti prie mylimų įrašų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=8&id='+track['tid']), ))
+	listitem.addContextMenuItems( commands )
+      
       if 'filename' in track:
 	listitem.setProperty('IsPlayable', 'true')
 	xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = track['filename'], listitem = listitem, isFolder = False, totalItems = 0)
@@ -283,6 +331,11 @@ def loadFavoriteTracks(page=1):
 
       listitem.setInfo(type = 'music', infoLabels = info )
       listitem.setProperty('IsPlayable', 'true')
+      
+      commands = []
+      commands.append(( 'Pašalinti iš mylimų įrašų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=8&id='+track['track_id']), ))
+      listitem.addContextMenuItems( commands )
+      
       xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=50&id='+ track['track_id'], listitem = listitem, isFolder = False, totalItems = 0)
       
     if len(data['tracks']) >= 20:
@@ -312,12 +365,16 @@ def loadFavorites():
   xbmc.executebuiltin('Container.SetViewMode(515)')
   xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
+def startSearch():
+  
+  dialog = xbmcgui.Dialog()
+  searchKey = dialog.input('Muzikos paieška', type=xbmcgui.INPUT_ALPHANUM)
+  
+  if searchKey:
+    xbmc.executebuiltin('ActivateWindow(Music,"%s")' % (sys.argv[0] + '?mode=15&page=1&searchKey=' + searchKey))
+
 def search(searchKey, page):
   
-  if not searchKey:
-    dialog = xbmcgui.Dialog()
-    searchKey = dialog.input('Muzikos paieška', type=xbmcgui.INPUT_ALPHANUM)
-    
   if not page:
     page = 1
   
@@ -335,6 +392,18 @@ def search(searchKey, page):
       info['duration'] = track['track_length']
 
       listitem.setInfo(type = 'music', infoLabels = info )
+      
+      like = False
+      if 'like_state' in track:
+	like = track['like_state'] == 'on'
+      
+      if isLoggedIn:
+	commands = []
+	if like:
+	  commands.append(( 'Pašalinti iš mylimų įrašų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=8&id='+track['track_id']), ))
+	else:
+	  commands.append(( 'Pridėti prie mylimų įrašų', 'XBMC.RunPlugin(%s)' % (sys.argv[0] + '?mode=8&id='+track['track_id']), ))      
+	listitem.addContextMenuItems( commands )
       
       listitem.setProperty('IsPlayable', 'true')
       xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = sys.argv[0] + '?mode=50&id='+ track['track_id'], listitem = listitem, isFolder = False, totalItems = 0)
@@ -368,6 +437,21 @@ def play_track(mid):
 def login():
   
   xbmc.executebuiltin('Addon.OpenSettings(plugin.audio.pakartot.lt)')
+  xbmc.executebuiltin('Container.Refresh')
+
+def favoriteAlbum(aid):
+  
+  pakartot.favorite_album(aid)
+  xbmc.executebuiltin('Container.Refresh')
+  
+def favoriteTrack(tid):
+  
+  pakartot.favorite_track(tid)
+  xbmc.executebuiltin('Container.Refresh')
+  
+def favoritePlaylist(pid):
+  
+  pakartot.favorite_playlist(pid)
   xbmc.executebuiltin('Container.Refresh')
 
 # **************** main ****************
@@ -417,8 +501,16 @@ elif mode == 5:
   loadPublicPlaylists(page)
 elif mode == 6:
   loadPlaylist(mid)
+elif mode == 7:
+  favoriteAlbum(mid)
+elif mode == 8:
+  favoriteTrack(mid)
+elif mode == 9:
+  favoritePlaylist(mid)
 elif mode == 10:
   loadAlbum(mid)
+elif mode == 14:
+  startSearch()
 elif mode == 15:
   search(searchKey, page)
 elif mode == 50:
