@@ -192,6 +192,7 @@ def loadAlbum(album_id):
 	xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = track['filename'], listitem = listitem, isFolder = False, totalItems = 0)
       else:
 	listitem.setProperty('IsPlayable', 'false')
+	listitem.setThumbnailImage(os.path.join( settings.getAddonInfo( 'path' ), 'resources', 'media', 'locked.png' ))
 	xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]),  url = '', listitem = listitem, isFolder = False, totalItems = 0)
       
   xbmcplugin.setContent(int( sys.argv[1] ), 'songs')
