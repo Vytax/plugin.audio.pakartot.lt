@@ -488,7 +488,7 @@ except:
   pass
 
 try:
-  searchKey = params["searchKey"]
+  searchKey = urllib.unquote_plus(params["searchKey"])
 except:
   pass
 
